@@ -1,52 +1,52 @@
 import numpy as np
 
-def spline_coefs(x,y):
+def spline_coefs(x, y):
 
-    a=y[:-1]
-    b=np.zeros(len(a), dtype='float')
-    d=np.zeros(len(a), dtype='float')
-    h=np.zeros(len(x)-1, dtype='float')
-    for i in range(0,len(x)-1):
-        h[i]=x[i+1]-x[i]
+    a = y[:-1] # y-вриједности на крају сваког интервала 
+    b = np.zeros(len(a), dtype='float')
+    d = np.zeros(len(a), dtype='float')
+    h = np.zeros(len(x)-1, dtype='float')
+    for i in range(0,len(x)-1): 
+        h[i] = x[i+1]-x[i] # ширина интервала
         
-    A=np.zeros([len(x), len(x)], dtype='float')
-    v=np.zeros(len(x))
+    A = np.zeros([len(x), len(x)], dtype='float')
+    v = np.zeros(len(x))
     
-    for i in range(1,len(A)-1):
+    for i in range(1, len(A)-1):
     
-        A[i][i]=2*(h[i-1]+h[i])
-        A[i][i-1]=h[i-1]
-        A[i][i+1]=h[i]
+        A[i][i] = 2*(h[i-1]+h[i]) # главна дијагонала
+        A[i][i-1] = h[i-1] 
+        A[i][i+1] = h[i] 
         
-        v[i]=3*((y[i+1]-y[i])/h[i]-(y[i]-y[i-1])/h[i-1])
+        v[i] = 3*((y[i+1]-y[i])/h[i]-(y[i]-y[i-1])/h[i-1])
     
-    A[0,0]=1; A[-1][-1]=1;
+    A[0,0] = 1; A[-1][-1] = 1; # гранични услови
     
                   
-    c = np.linalg.solve(A,v)
+    c = np.linalg.solve(A, v) # рјешење система једначина
     
     for i in range(len(a)):
-        b[i]=(y[i+1]-y[i])/h[i]-h[i]/3*(2*c[i]+c[i+1])
-        d[i]=(c[i+1]-c[i])/3/h[i]
+        b[i] = (y[i+1]-y[i])/h[i]-h[i]/3*(2*c[i]+c[i+1]) # коефицијент b
+        d[i] = (c[i+1]-c[i])/3/h[i] # коефицијент d
         
-    c=c[:-1]
+    c = c[:-1]
     
     return a,b,c,d
 
-def spline_interp(x,y,x0):
-
-    a,b,c,d=spline_coefs(x,y)
+def spline_interp(x, y, x0):
+    a, b, c, d = spline_coefs(x, y)
     
-    y0=np.zeros(len(x0))
+    y0 = np.zeros(len(x0))
     for i in range(len(y0)):
-
-        ind=np.argwhere(x<=x0[i])[-1]
+        ind = np.searchsorted(x, x0[i], side='right') - 1 
         
-        if ind==len(a): # za poslednji segment
-            ind=ind-1
-
-        y0[i]=a[ind]+b[ind]*(x0[i]-x[ind]) \
-        +c[ind]*(x0[i]-x[ind])**2+d[ind]*(x0[i]-x[ind])**3
+        if ind == len(a):
+            ind = ind - 1
+        if ind < 0:  
+            ind = 0
+            
+        y0[i] = a[ind] + b[ind]*(x0[i]-x[ind]) \
+              + c[ind]*(x0[i]-x[ind])**2 + d[ind]*(x0[i]-x[ind])**3
 
     return y0
 
